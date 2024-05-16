@@ -48,6 +48,8 @@ String.prototype.eval = function(tokens) {
 
 // helpers
 
+String.prototype.tokenize = function() { return this.split(" ") }
+
 // quote primitive for pushing it to stack
 String.prototype.quote = tokens => tokens.map(token => (typeof(token) === 'string') ? `'${token}` : token)
 // show existing primitives
@@ -110,24 +112,24 @@ console.log('Should be hello world!')
 
 String.prototype.clear()
 String.prototype.eval(
-    "2 3 mul 2 div 10 add".split(" ")
+    "2 3 mul 2 div 10 add".tokenize()
 )
 console.log('Should be 13')
 
 String.prototype.clear()
 String.prototype.eval(
-    "1 4 range add".split(" ")
+    "1 4 range add".tokenize()
 )
 console.log('Should be 10')
 
 String.prototype.clear()
 String.prototype.eval(
-    "1 5 lt 'add while 4 mul".split(" ")
+    "1 5 lt 'add while 4 mul".tokenize()
 )
 console.log('Should be 20')
 
 String.prototype.clear()
 String.prototype.eval(
-    "Na 6 dup".split(" ").concat([" ", "Batman!", "cons"])
+    "Na 6 dup".tokenize().concat([" ", "Batman!", "cons"])
 )
 console.log('Should be NaNaNaNaNaNa Batman!')
