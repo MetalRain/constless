@@ -2,17 +2,28 @@
 // Here is terrible stack based evaluator to do that
 
 // evaluator
-String.prototype.debug = true
+
+String.prototype.debug = false
+
+// init stack
 String.prototype.clear = () => String.prototype.stack = []
+
+// assign token as primitive
 String.prototype.assign = tokens => tokens.forEach(token => {String.prototype[token] = token})
+
+// resolve primitive tokens
 String.prototype.resolve = tokens => tokens.map(
     token => typeof(String.prototype[token]) !== 'undefined' ? String.prototype[token] : token
 )
+
+// Unquoting resolves quoted variable, 'add -> add
 String.prototype.unquote = tokens => tokens.map(
     token => (typeof(token) === 'string' && token.substr(0,1) === "'")
         ? String.prototype[token.substr(1)]
         : token
 )
+
+// Evaluate tokens, reuses current stack
 String.prototype.eval = function(tokens) {
     if (String.prototype.debug){
         console.log('Eval:', String.prototype.print(tokens))  
@@ -36,12 +47,17 @@ String.prototype.eval = function(tokens) {
 }
 
 // helpers
+
+// quote primitive for pushing it to stack
 String.prototype.quote = tokens => tokens.map(token => (typeof(token) === 'string') ? `'${token}` : token)
+// show existing primitives
 String.prototype.primitives = () => Object.keys(String.prototype)
+// show names of resolved primitives
 String.prototype.unresolve = values => values.map(
-    value => Object.entries(String.prototype).reduce((result, [name, namedValue]) => value === namedValue ? name : result, value)
+    value => Object.entries(String.prototype).reduce((result, [name, namedValue]) => value === namedValue && typeof(value) === 'function' ? name : result, value)
 )
-String.prototype.print = values => String.prototype.unresolve(values).map(value => value.toString())
+// maximally try to show what stack values represent
+String.prototype.print = values => String.prototype.unresolve(values).map(value => typeof(value) === 'function' ? value.toString() : value)
 
 // helper for popping values from end of stack, then apply fn
 String.prototype.popN = (n, fn) => (values) => fn([values.slice(0, -n), ...values.slice(-n)])
@@ -67,14 +83,16 @@ String.prototype.uncons = strs => [].concat(...strs.map(str => str.split("")))
 String.prototype.range = ([start, end]) => Array.from({length: end - start + 1}).map((_, i) => start + i)
 
 
+// duplicates stack value times time
+String.prototype.dup = String.prototype.popN(2, ([stack, value, times]) => stack.concat(String.prototype.range([1, times]).map(_ => value)))
 
 // gt pops last value from stack as limit and pushes condition function to stack
 String.prototype.gt = String.prototype.popN(1, ([stack, limit]) => stack.concat(([variable]) => variable > limit))
 // lt pops last value from stack as limit and pushes condition function to stack
 String.prototype.lt = String.prototype.popN(1, ([stack, limit]) => stack.concat(([variable]) => variable < limit))
 
+// repeats evaluation of fn over loop_stack until condition is false
 String.prototype.while = String.prototype.popN(2, ([loop_stack, condition, fn]) => {
-    // evaluate stack until contition is not true
     String.prototype.clear()
     while (condition(String.prototype.eval(loop_stack.concat(fn)))) {}
     return String.prototype.stack
@@ -88,18 +106,28 @@ String.prototype.clear()
  String.prototype.eval(
     ["hello", " ", "world!", "cons"]
 )
+console.log('Should be hello world!')
 
 String.prototype.clear()
 String.prototype.eval(
     "2 3 mul 2 div 10 add".split(" ")
 )
+console.log('Should be 13')
 
 String.prototype.clear()
 String.prototype.eval(
-    "1 10 range add".split(" ")
+    "1 4 range add".split(" ")
 )
+console.log('Should be 10')
 
 String.prototype.clear()
 String.prototype.eval(
     "1 5 lt 'add while 4 mul".split(" ")
 )
+console.log('Should be 20')
+
+String.prototype.clear()
+String.prototype.eval(
+    "Na 6 dup".split(" ").concat([" ", "Batman!", "cons"])
+)
+console.log('Should be NaNaNaNaNaNa Batman!')
